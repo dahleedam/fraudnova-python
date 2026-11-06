@@ -1,5 +1,8 @@
 from typing import Any
 
+import pytest
+
+from fraudnova import InvalidArgumentError
 from fraudnova.results import (
     BatchResult,
     DateInfo,
@@ -123,6 +126,14 @@ def test_custom_threshold_and_flag_on() -> None:
     assert r.flag_reasons(risk_threshold=40, flag_on=["tor"]) == ["fraud_score", "tor"]
     assert r.flag_reasons(flag_on=[]) == []
     assert r.flagged(risk_threshold=50, flag_on=()) is True
+
+
+def test_flag_on_rejects_bare_string() -> None:
+    r = IpResult.from_dict({"fraud_score": 10, "proxy": True})
+    with pytest.raises(InvalidArgumentError):
+        r.flag_reasons(flag_on="proxy")
+    with pytest.raises(InvalidArgumentError):
+        r.flagged(flag_on="proxy")
 
 
 def test_email_date_fields() -> None:

@@ -79,7 +79,7 @@ print("Credits left:", batch.credits_remaining)
 
 `check_ips()` takes the same keyword options as `check_ip()`, and `check_phones()` takes one `country` hint for the whole batch. `BatchResult` is iterable and supports `len()` and indexing; each `BatchItem` has `subject`, `success`, `result` (an `IpResult`, `EmailResult` or `PhoneResult`, or `None` on failure) and `error`. `has_failures()` tells you whether any item failed.
 
-If a request after the first raises an exception, for example `InsufficientCreditsError`, the exception propagates and the requests that already succeeded stay billed. If you need control over each request, slice the list yourself:
+Batches are split into requests of 100. When a request reports zero credits remaining, the client stops and marks the remaining items `insufficient_credits` instead of sending a request that would fail. Any other error on a later request (a 429 with no retry policy or with the retries used up, a 503, or a `TransportError`) propagates as an exception, and the results of the earlier requests are discarded even though they were billed. If you need control over each request, slice the list to 100 yourself:
 
 ```python
 for start in range(0, len(ips), fraudnova.BATCH_MAX):
@@ -97,7 +97,7 @@ Items must be strings or `None`; any other type raises `InvalidArgumentError` be
 
 ## Results
 
-`check_ip()`, `check_email()` and `check_phone()` return an `IpResult`, `EmailResult` or `PhoneResult`. Each has the API's fields as snake_case attributes, for example `fraud_score`, `recent_abuse` and `country_code`. `fraud_score` is always an integer from 0 to 100; every other field is optional (`None`), because the API does not return every field for every check.
+`check_ip()`, `check_email()` and `check_phone()` return an `IpResult`, `EmailResult` or `PhoneResult`. Each has the API's fields as snake_case attributes, for example `fraud_score`, `recent_abuse` and `country_code`. `fraud_score` is always an integer (0 when the API does not return one); every other field is optional (`None`), because the API does not return every field for every check.
 
 ```python
 ip = client.check_ip("8.8.8.8")
@@ -197,6 +197,8 @@ client = Client("fn_your_api_key", retry=RetryPolicy(max_attempts=3))
 ```
 
 `max_attempts` counts the first attempt, so `3` means up to two retries. Only 429 is retried; every other error is raised right away. The wait is the `Retry-After` header when the response has one, otherwise a short schedule for the concurrency limit and a longer one for the rate limit. When the attempts run out, the `RateLimitError` is raised. A `Retry-After` longer than `max_retry_after` (60 seconds by default) is not waited for; the `RateLimitError` is raised right away. Batch requests are safe to retry, because a 429 is returned before any item is checked.
+
+Retries can make one call slow. With `RetryPolicy(max_attempts=3)` and the default `max_retry_after=60`, one call can sleep for up to about two minutes, plus three timeouts. Inside a web request, use a small `max_retry_after` (for example `2`) and a short `timeout`, and keep the full policy for background jobs.
 
 ## Bring your own HTTP client
 

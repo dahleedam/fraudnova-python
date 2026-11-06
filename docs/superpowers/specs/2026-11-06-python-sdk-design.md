@@ -152,7 +152,10 @@ Behaviour:
   `InvalidArgumentError` naming its index. Items are stripped (`None` and `""` are sent as-is; the API
   answers them per item). The list is split into chunks of `BATCH_MAX` and one POST is sent per
   chunk, in order; the returned `BatchResult.items` is the concatenation in input order and
-  `credits_remaining` is the last response's value. An exception on a later chunk propagates after
+  `credits_remaining` is the last response's value. When a response reports `credits_remaining == 0`
+  and items remain, no further POST is sent: each remaining item is returned as a failed `BatchItem`
+  with `error="insufficient_credits"` (subject stripped, `""` for `None`), because the API would
+  answer that request with 402 and lose the paid results. Any other exception on a later chunk propagates after
   earlier chunks were already billed — the README says so and tells users who need per-chunk control
   to slice the list themselves.
 - `my_ip()` sends no `Authorization` header. Every other call sends it.

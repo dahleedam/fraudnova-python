@@ -6,6 +6,8 @@ from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any, ClassVar, Literal, Optional, Union
 
+from fraudnova.exceptions import InvalidArgumentError
+
 _WHOLE = re.compile(r"-?[0-9]+")
 _DECIMAL = re.compile(r"-?[0-9]+\.[0-9]+")
 
@@ -72,6 +74,8 @@ class _FlaggableResult:
     def flag_reasons(
         self, risk_threshold: int = 75, flag_on: Optional[Sequence[str]] = None
     ) -> list[str]:
+        if isinstance(flag_on, (str, bytes)):
+            raise InvalidArgumentError("flag_on must be a list of field names, not a single string")
         reasons: list[str] = []
         if (_int(self.raw.get("fraud_score")) or 0) >= risk_threshold:
             reasons.append("fraud_score")

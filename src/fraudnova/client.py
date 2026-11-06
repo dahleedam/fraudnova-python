@@ -151,6 +151,8 @@ class Client:
         subjects: Sequence[Optional[str]],
         extra: Mapping[str, Any],
     ) -> BatchResult:
+        if isinstance(subjects, (str, bytes)):
+            raise InvalidArgumentError(f"{field} must be a list of values, not a single string")
         if len(subjects) == 0:
             raise InvalidArgumentError(f"{field} must not be empty")
         cleaned: list[Optional[str]] = []
@@ -168,6 +170,20 @@ class Client:
             part = BatchResult.from_dict(envelope, kind)
             items.extend(part.items)
             credits = part.credits_remaining
+            rest = cleaned[start + BATCH_MAX :]
+            if rest and _int(envelope.get("credits_remaining")) == 0:
+                # The API answers 402 to a request sent with a zero balance, which would
+                # discard the results above; mark the unsent items the way the API does.
+                items.extend(
+                    BatchItem(
+                        subject=item or "",
+                        success=False,
+                        result=None,
+                        error="insufficient_credits",
+                    )
+                    for item in rest
+                )
+                break
         return BatchResult(items=items, credits_remaining=credits)
 
     # Account

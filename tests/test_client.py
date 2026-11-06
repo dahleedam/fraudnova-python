@@ -157,6 +157,43 @@ def test_batch_error_on_later_chunk_propagates(make_http_client: ClientFactory) 
     assert len(sent) == 2
 
 
+def test_batch_stops_when_balance_reaches_zero(make_http_client: ClientFactory) -> None:
+    ips = [f"10.1.{i // 250}.{i % 250}" for i in range(249)] + [None]
+    http, sent = make_http_client(echo_batch("ip", ips[:100], 0))
+    c = Client(KEY, http_client=http)
+    result = c.check_ips(ips)
+    assert len(sent) == 1
+    assert len(result.items) == 250
+    assert all(i.success for i in result.items[:100])
+    rest = result.items[100:]
+    assert all(not i.success and i.result is None for i in rest)
+    assert all(i.is_insufficient_credits() for i in rest)
+    assert [i.subject for i in rest] == [*ips[100:249], ""]
+    assert result.credits_remaining == 0
+
+
+def test_batch_continues_while_credits_remain(make_http_client: ClientFactory) -> None:
+    ips = [f"10.2.0.{i}" for i in range(150)]
+    http, sent = make_http_client(echo_batch("ip", ips[:100], 5), echo_batch("ip", ips[100:], 0))
+    c = Client(KEY, http_client=http)
+    result = c.check_ips(ips)
+    assert len(sent) == 2
+    assert all(i.success for i in result.items)
+    assert result.credits_remaining == 0
+
+
+def test_batch_rejects_bare_string(make_http_client: ClientFactory) -> None:
+    http, sent = make_http_client()
+    c = Client(KEY, http_client=http)
+    with pytest.raises(InvalidArgumentError):
+        c.check_ips("8.8.8.8")
+    with pytest.raises(InvalidArgumentError):
+        c.check_emails(b"a@b.co")  # type: ignore[arg-type]
+    with pytest.raises(InvalidArgumentError):
+        c.check_phones("15551234567")
+    assert sent == []
+
+
 def test_balance_and_my_ip(make_http_client: ClientFactory) -> None:
     http, sent = make_http_client(
         json_response(200, {"success": True, "credits_remaining": 123}),
