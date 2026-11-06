@@ -41,6 +41,12 @@ class ApiError(FraudNovaError):
             if message is not None
             else f"FraudNova API error (HTTP {status_code}): {api_message}"
         )
+        self._init_args: tuple[Any, ...] = (status_code, api_message, body, message)
+
+    def __reduce__(self) -> "tuple[Any, tuple[Any, ...], dict[str, Any]]":
+        # BaseException rebuilds from self.args (the message only), which does not match
+        # this constructor; rebuild from the arguments the instance was created with.
+        return (type(self), self._init_args, dict(self.__dict__))
 
     @classmethod
     def from_response(
@@ -118,6 +124,7 @@ class RateLimitError(ApiError):
     ) -> None:
         super().__init__(status_code, api_message, body, message)
         self.retry_after = retry_after
+        self._init_args = (status_code, api_message, body, retry_after, message)
 
     @property
     def is_concurrency_limit(self) -> bool:
@@ -144,6 +151,7 @@ class UpstreamError(ApiError):
             text += " The credit for this check was refunded."
         super().__init__(status_code, api_message, body, text)
         self.credit_refunded = credit_refunded
+        self._init_args = (status_code, api_message, body, credit_refunded, message)
 
 
 class UnexpectedResponseError(ApiError):

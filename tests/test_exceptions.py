@@ -127,3 +127,35 @@ def test_from_response_tolerates_deeply_nested_json() -> None:
     error = ApiError.from_response(500, "[" * 100000)
     assert type(error) is ApiError
     assert "non-JSON response" in str(error)
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        ApiError(418, "teapot", {"message": "teapot"}),
+        AuthenticationError(401, "Unauthenticated", {"success": False}),
+        InsufficientCreditsError(402, "Insufficient credits", {"success": False}),
+        AccountSuspendedError(403, "Suspended", {"success": False}),
+        ValidationError(422, "Invalid", {"errors": {"ip": ["bad"]}}),
+        RateLimitError(429, "Too many requests", {"success": False}, 7),
+        UpstreamError(503, "Upstream lookup failed.", {"success": False}, True),
+        UnexpectedResponseError(200, "Missing data", {"success": True}),
+        ApiError(500, "x", {}, "custom text"),
+    ],
+)
+def test_api_errors_survive_pickle_and_copy(error: ApiError) -> None:
+    import copy
+    import pickle
+
+    for clone in (pickle.loads(pickle.dumps(error)), copy.copy(error), copy.deepcopy(error)):
+        assert type(clone) is type(error)
+        assert str(clone) == str(error)
+        assert clone.status_code == error.status_code
+        assert clone.api_message == error.api_message
+        assert clone.body == error.body
+        if isinstance(error, RateLimitError):
+            assert isinstance(clone, RateLimitError)
+            assert clone.retry_after == error.retry_after
+        if isinstance(error, UpstreamError):
+            assert isinstance(clone, UpstreamError)
+            assert clone.credit_refunded is error.credit_refunded
