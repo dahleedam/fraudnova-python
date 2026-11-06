@@ -16,7 +16,12 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
-    name: Python ${{ matrix.python-version }}
+        httpx: ['']
+        include:
+          # The oldest httpx the package allows (dependencies: httpx>=0.26).
+          - python-version: '3.9'
+            httpx: '0.26.*'
+    name: Python ${{ matrix.python-version }}${{ matrix.httpx && format(' (httpx {0})', matrix.httpx) || '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -26,6 +31,9 @@ jobs:
           cache: pip
 
       - run: pip install -e ".[dev]"
+        if: matrix.httpx == ''
+      - run: pip install -e ".[dev]" "httpx==${{ matrix.httpx }}"
+        if: matrix.httpx != ''
       - run: ruff check .
       - run: ruff format --check .
       - run: mypy

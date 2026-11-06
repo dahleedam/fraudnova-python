@@ -36,11 +36,9 @@ These are your steps to publish the package. The code, tests and docs are alread
    python -m venv /tmp/fn && /tmp/fn/bin/pip install fraudnova && /tmp/fn/bin/python -c "import fraudnova; print(fraudnova.__version__)"
    ```
 
-## Follow-ups in the other repositories (separate session)
+## Follow-ups in the other repositories
 
-- Main app: add a "Python SDK" install line (`pip install fraudnova`) with a link to the GitHub repository on `/docs`.
-- Main app: add a changelog entry for the Python SDK on `/admin/changelog`.
-- Examples repository: link the SDK from the README of `dahleedam/fraudnova-examples`.
+The main app's `/docs#python-sdk` section, "Python SDK" code tabs and `python-sdk` changelog entry are committed on the app branch and deploy per `docs/DEPLOY.md` "Python SDK docs (2026-11-06)". The examples repository's README link to the SDK is committed and needs `git push`.
 
 ## Patch and minor releases
 
