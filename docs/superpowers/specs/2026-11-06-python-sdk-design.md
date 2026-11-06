@@ -47,7 +47,7 @@ the n8n community node (`n8n-nodes-fraudnova`) and the examples repository
 - Python ≥ 3.9 (so `typing.Optional`/`List`/`Dict` spellings, no `X | Y` at runtime, no `match`).
   CI matrix 3.9, 3.10, 3.11, 3.12, 3.13. Local toolchain: `uv` with Python 3.9.25 in `.venv`,
   Python 3.13.18 available for a second run.
-- Runtime dependency: `httpx>=0.23,<1.0`. Dev: `pytest`, `mypy`, `ruff` (optional-dependency group
+- Runtime dependency: `httpx>=0.26,<1.0`. Dev: `pytest`, `mypy`, `ruff` (optional-dependency group
   `dev`).
 - Build backend: hatchling, `src/` layout, version read from `src/fraudnova/_version.py`.
 - Licence MIT, copyright "FraudNova" (same text as the PHP SDK).

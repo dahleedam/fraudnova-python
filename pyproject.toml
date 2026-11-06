@@ -21,7 +21,7 @@ classifiers = [
   "Typing :: Typed",
   "License :: OSI Approved :: MIT License",
 ]
-dependencies = ["httpx>=0.23,<1.0"]
+dependencies = ["httpx>=0.26,<1.0"]
 
 [project.optional-dependencies]
 dev = ["pytest>=7", "mypy>=1.8", "ruff>=0.5"]

@@ -10,7 +10,7 @@
 ## Requirements
 
 - Python 3.9 or later
-- [httpx](https://www.python-httpx.org/), installed automatically
+- [httpx](https://www.python-httpx.org/) 0.26 or later, installed automatically
 
 ## Installation
 
