@@ -7,10 +7,12 @@ import pytest
 from fraudnova._transport import Transport
 from fraudnova.exceptions import (
     InsufficientCreditsError,
+    InvalidArgumentError,
     RateLimitError,
     TransportError,
     UnexpectedResponseError,
     UpstreamError,
+    mask_api_key,
 )
 from fraudnova.retry import RetryPolicy
 from tests.conftest import ClientFactory, json_response
@@ -169,3 +171,17 @@ def test_default_client_uses_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(httpx, "Client", fake_client)
     Transport(KEY, BASE, 12.0, None, None).get("/check")
     assert seen["timeout"] == httpx.Timeout(12.0, connect=10.0)
+
+
+@pytest.mark.parametrize("key", ["fn_bad\nkey", "fn_bad key", "fn_clé_1234567890", "\tfn_x"])
+def test_unsafe_api_key_is_rejected(key: str) -> None:
+    with pytest.raises(InvalidArgumentError):
+        Transport(key, BASE, 30.0, None, None)
+
+
+def test_transport_error_masks_key_in_message(make_http_client: ClientFactory) -> None:
+    client, _ = make_http_client(httpx.LocalProtocolError(f"Illegal header value b'Bearer {KEY}'"))
+    with pytest.raises(TransportError) as info:
+        transport(client).get("/check")
+    assert KEY not in str(info.value)
+    assert mask_api_key(KEY) in str(info.value)

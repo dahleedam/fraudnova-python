@@ -9,9 +9,11 @@ import httpx
 from fraudnova._version import __version__
 from fraudnova.exceptions import (
     ApiError,
+    InvalidArgumentError,
     RateLimitError,
     TransportError,
     UnexpectedResponseError,
+    mask_api_key,
 )
 from fraudnova.retry import RetryPolicy, parse_retry_after
 
@@ -25,6 +27,10 @@ class Transport:
         retry: Optional[RetryPolicy],
         http_client: Optional[httpx.Client],
     ) -> None:
+        if api_key == "" or any(not 0x21 <= ord(ch) <= 0x7E for ch in api_key):
+            raise InvalidArgumentError(
+                "api_key must contain only printable ASCII characters, without whitespace."
+            )
         self._api_key = api_key
         self.base_url = base_url.rstrip("/")
         self._timeout = timeout
@@ -76,7 +82,8 @@ class Transport:
                     method, url, params=params, json=json, headers=self._headers(authenticated)
                 )
             except (httpx.HTTPError, httpx.InvalidURL, httpx.StreamError) as exc:
-                raise TransportError(f"FraudNova request failed: {exc}") from exc
+                message = str(exc).replace(self._api_key, mask_api_key(self._api_key))
+                raise TransportError(f"FraudNova request failed: {message}") from exc
 
             try:
                 return self._decode(response)
