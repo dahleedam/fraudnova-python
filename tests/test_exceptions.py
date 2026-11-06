@@ -121,3 +121,9 @@ def test_empty_body_message_is_http_status() -> None:
 def test_mask_api_key() -> None:
     assert mask_api_key("fn_" + "a" * 20 + "WXYZ") == "fn_…WXYZ"
     assert mask_api_key("fn_short") == "fn_…"
+
+
+def test_from_response_tolerates_deeply_nested_json() -> None:
+    error = ApiError.from_response(500, "[" * 100000)
+    assert type(error) is ApiError
+    assert "non-JSON response" in str(error)

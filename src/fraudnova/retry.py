@@ -18,7 +18,10 @@ def parse_retry_after(value: Optional[str], now: Optional[datetime] = None) -> O
     if text == "":
         return None
     if text.isascii() and text.isdigit():
-        return int(text)
+        try:
+            return int(text)
+        except ValueError:
+            return None
     try:
         when = parsedate_to_datetime(text)
     except (TypeError, ValueError, IndexError):

@@ -48,7 +48,7 @@ class ApiError(FraudNovaError):
     ) -> "ApiError":
         try:
             decoded: Any = json.loads(text)
-        except ValueError:
+        except (ValueError, RecursionError):
             decoded = None
         is_json = isinstance(decoded, dict)
         body: dict[str, Any] = decoded if isinstance(decoded, dict) else {}

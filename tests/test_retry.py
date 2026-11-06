@@ -74,3 +74,7 @@ def test_sleep_calls_sleeper() -> None:
     calls: list[float] = []
     RetryPolicy(sleeper=calls.append).sleep(2.5)
     assert calls == [2.5]
+
+
+def test_parse_retry_after_ignores_absurdly_long_digit_strings() -> None:
+    assert parse_retry_after("9" * 5000) is None
