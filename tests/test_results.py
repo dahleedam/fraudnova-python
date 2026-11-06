@@ -21,6 +21,7 @@ def test_int_coercion() -> None:
     assert _int(float("nan")) is None
     assert _int(float("inf")) is None
     assert _int(None) is None
+    assert _int("9" * 5000) is None
 
 
 def ip_fixture() -> dict[str, Any]:
@@ -252,3 +253,54 @@ def test_batch_result_tolerates_garbage() -> None:
     assert len(batch) == 1
     assert batch[0].subject == "1.1.1.1"
     assert BatchResult.from_dict({"results": "nope", "credits_remaining": "x"}, "ip").items == []
+
+
+def test_email_result_swap_proof_every_field() -> None:
+    bools = [
+        "valid", "disposable", "catch_all", "generic", "common", "dns_valid", "honeypot",
+        "frequent_complainer", "suspect", "recent_abuse", "leaked", "risky_tld", "spf_record",
+        "dmarc_record",
+    ]  # fmt: skip
+    for name in bools:
+        r = EmailResult.from_dict({b: b == name for b in bools})
+        assert [b for b in bools if getattr(r, b) is True] == [name]
+        assert all(getattr(r, b) is False for b in bools if b != name)
+    data: dict[str, Any] = {
+        "fraud_score": 11,
+        "smtp_score": 12,
+        "overall_score": 13,
+        "deliverability": "d-high",
+        "spam_trap_score": "d-none",
+        "result_type": "d-type",
+        "sanitized_email": "d@san.co",
+        "first_seen": {"human": "a", "timestamp": 1, "iso": "i1"},
+        "domain_age": {"human": "b", "timestamp": 2, "iso": "i2"},
+    }
+    r = EmailResult.from_dict(data, credits_remaining=14)
+    assert (r.fraud_score, r.smtp_score, r.overall_score, r.credits_remaining) == (11, 12, 13, 14)
+    assert r.deliverability == "d-high"
+    assert r.spam_trap_score == "d-none"
+    assert r.result_type == "d-type"
+    assert r.sanitized_email == "d@san.co"
+    assert r.first_seen == DateInfo("a", 1, "i1")
+    assert r.domain_age == DateInfo("b", 2, "i2")
+
+
+def test_phone_result_swap_proof_every_field() -> None:
+    bools = {
+        "valid": "valid", "recent_abuse": "recent_abuse", "VOIP": "voip", "prepaid": "prepaid",
+        "risky": "risky", "active": "active", "do_not_call": "do_not_call", "leaked": "leaked",
+        "spammer": "spammer",
+    }  # fmt: skip
+    for key, attr in bools.items():
+        r = PhoneResult.from_dict({k: k == key for k in bools})
+        assert [a for a in bools.values() if getattr(r, a) is True] == [attr]
+    strings = {
+        "carrier": "s-carrier", "line_type": "s-line", "country": "s-country",
+        "region": "s-region", "city": "s-city", "timezone": "s-tz", "zip_code": "s-zip",
+        "active_status": "s-status", "formatted": "s-fmt", "local_format": "s-local",
+    }  # fmt: skip
+    r = PhoneResult.from_dict({"fraud_score": 21, "dialing_code": 22, **strings}, 23)
+    assert (r.fraud_score, r.dialing_code, r.credits_remaining) == (21, 22, 23)
+    for key, value in strings.items():
+        assert getattr(r, key) == value

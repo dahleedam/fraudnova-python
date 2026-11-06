@@ -27,7 +27,10 @@ def _int(value: Any) -> Optional[int]:
     number: Optional[float] = None
     if isinstance(value, str):
         if _WHOLE.fullmatch(value):
-            return int(value)
+            try:
+                return int(value)
+            except ValueError:  # beyond Python's int-string digit limit
+                return None
         if _DECIMAL.fullmatch(value):
             number = float(value)
     elif isinstance(value, float):
