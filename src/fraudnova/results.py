@@ -27,6 +27,8 @@ def _int(value: Any) -> Optional[int]:
     number: Optional[float] = None
     if isinstance(value, str):
         if _WHOLE.fullmatch(value):
+            if len(value) > 20:
+                return None
             try:
                 return int(value)
             except ValueError:  # beyond Python's int-string digit limit

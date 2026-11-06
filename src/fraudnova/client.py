@@ -21,7 +21,9 @@ def _subject(value: str, name: str) -> str:
 
 
 def _strictness(value: Optional[int]) -> Optional[int]:
-    if value is not None and (isinstance(value, bool) or value not in (0, 1, 2, 3)):
+    if value is None:
+        return None
+    if not isinstance(value, int) or isinstance(value, bool) or value not in (0, 1, 2, 3):
         raise InvalidArgumentError("strictness must be an integer from 0 to 3")
     return value
 
@@ -180,6 +182,6 @@ class Client:
     def my_ip(self) -> str:
         envelope = self._transport.get("/my-ip", authenticated=False)
         ip = envelope.get("ip")
-        if not isinstance(ip, str):
+        if not isinstance(ip, str) or not ip:
             raise UnexpectedResponseError(200, "Missing ip", dict(envelope))
         return ip

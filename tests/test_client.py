@@ -78,9 +78,9 @@ def test_check_ip_omits_unset_options(make_http_client: ClientFactory) -> None:
 def test_check_ip_rejects_bad_strictness_and_empty_ip(make_http_client: ClientFactory) -> None:
     http, sent = make_http_client()
     c = Client(KEY, http_client=http)
-    for bad in (-1, 4):
+    for bad in (-1, 4, 2.0, True):
         with pytest.raises(InvalidArgumentError):
-            c.check_ip("8.8.8.8", strictness=bad)
+            c.check_ip("8.8.8.8", strictness=bad)  # type: ignore[arg-type]
     with pytest.raises(InvalidArgumentError):
         c.check_ip("  ")
     assert sent == []
@@ -209,3 +209,10 @@ def test_public_exports() -> None:
     for name in names:
         assert name in fraudnova.__all__
         assert hasattr(fraudnova, name)
+
+
+def test_my_ip_rejects_empty_ip(make_http_client: ClientFactory) -> None:
+    http, _ = make_http_client(json_response(200, {"success": True, "ip": ""}))
+    with pytest.raises(UnexpectedResponseError) as info:
+        Client(KEY, http_client=http).my_ip()
+    assert info.value.api_message == "Missing ip"

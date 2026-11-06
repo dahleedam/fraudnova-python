@@ -22,6 +22,8 @@ def test_int_coercion() -> None:
     assert _int(float("inf")) is None
     assert _int(None) is None
     assert _int("9" * 5000) is None
+    assert _int("9" * 21) is None
+    assert _int("9" * 20) == int("9" * 20)
 
 
 def ip_fixture() -> dict[str, Any]:
