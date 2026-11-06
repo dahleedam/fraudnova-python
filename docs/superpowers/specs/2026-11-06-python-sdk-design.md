@@ -37,7 +37,7 @@ the n8n community node (`n8n-nodes-fraudnova`) and the examples repository
 
 - Nothing in the package, README, docstrings, tests, this document, the changelog or commit
   messages may name the upstream scoring provider (full name or four-letter abbreviation) or
-  describe upstream keys, key pools, credentials or quotas. A test greps the repository for the
+  describe pool internals, upstream credentials, credentials or quotas. A test greps the repository for the
   forbidden strings, assembled from fragments inside the test file.
 - The API key must never appear in an exception message, `repr()` or log line.
 - No heavy dependencies: runtime requires `httpx` only.
@@ -112,23 +112,29 @@ fraudnova-python/
 ```python
 from fraudnova import Client, RetryPolicy
 
-client = Client("fn_your_key")                                  # httpx.Client created internally, 30 s timeout
-client = Client("fn_your_key", base_url="https://fraudnova.com/api/v1", timeout=10.0,
-                retry=RetryPolicy(max_attempts=3), http_client=my_httpx_client)
+client = Client("fn_your_key")  # httpx.Client created internally, 30 s timeout
+client = Client(
+    "fn_your_key",
+    base_url="https://fraudnova.com/api/v1",
+    timeout=10.0,
+    retry=RetryPolicy(max_attempts=3),
+    http_client=my_httpx_client,
+)
 
-ip = client.check_ip("8.8.8.8")                                 # IpResult
+ip = client.check_ip("8.8.8.8")  # IpResult
 ip = client.check_ip("8.8.8.8", strictness=3, mobile=True, user_agent=ua, user_language="en-US")
-email = client.check_email("user@example.com")                  # EmailResult
-phone = client.check_phone("18176791808", country="US")         # PhoneResult
+email = client.check_email("user@example.com")  # EmailResult
+phone = client.check_phone("18176791808", country="US")  # PhoneResult
 
 batch = client.check_ips(["8.8.8.8", "1.1.1.1"], strictness=2)  # BatchResult, chunked by 100
 batch = client.check_emails([...])
 batch = client.check_phones([...], country="US")
 
-credits = client.balance()                                      # int
-my_ip = client.my_ip()                                          # str
+credits = client.balance()  # int
+my_ip = client.my_ip()  # str
 
-with Client("fn_…") as client: ...                              # closes the httpx client it created
+with Client("fn_…") as client:
+    ...  # closes the httpx client it created
 ```
 
 Constants: `fraudnova.BATCH_MAX = 100`, `fraudnova.DEFAULT_BASE_URL`, `fraudnova.__version__`.

@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.pyc
+dist/
+build/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+uv.lock
+.superpowers/
+.DS_Store
+.idea/
+.vscode/

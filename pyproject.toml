@@ -1,0 +1,57 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "fraudnova"
+dynamic = ["version"]
+description = "Official Python client for the FraudNova fraud-detection API (IP, email and phone checks)"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT"
+authors = [{ name = "FraudNova", email = "support@fraudnova.com" }]
+keywords = ["fraud", "fraud-detection", "ip", "proxy", "vpn", "email-validation", "phone-validation", "api-client"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Typing :: Typed",
+  "License :: OSI Approved :: MIT License",
+]
+dependencies = ["httpx>=0.23,<1.0"]
+
+[project.optional-dependencies]
+dev = ["pytest>=7", "mypy>=1.8", "ruff>=0.5"]
+
+[project.urls]
+Homepage = "https://fraudnova.com"
+Documentation = "https://fraudnova.com/docs"
+Repository = "https://github.com/dahleedam/fraudnova-python"
+Changelog = "https://github.com/dahleedam/fraudnova-python/blob/main/CHANGELOG.md"
+
+[tool.hatch.version]
+path = "src/fraudnova/_version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/fraudnova"]
+
+[tool.hatch.build.targets.sdist]
+exclude = [".venv", ".superpowers"]
+
+[tool.ruff]
+target-version = "py39"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.mypy]
+strict = true
+python_version = "3.9"
+files = ["src", "tests"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

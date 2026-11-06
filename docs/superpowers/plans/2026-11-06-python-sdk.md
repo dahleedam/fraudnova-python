@@ -18,7 +18,7 @@
 - `User-Agent: fraudnova-python/<version> python/<X.Y.Z>` on every request; `Authorization: Bearer <key>` on every request except `GET /my-ip`.
 - Batch chunk size `BATCH_MAX = 100`; risk threshold default 75; default flag fields IP `("proxy", "vpn", "tor")`, email `("disposable",)`, phone `("VOIP", "risky")`.
 - Retry defaults: `max_attempts=3`, `concurrency_delays=(1, 2, 4)`, `rate_limit_delays=(5, 15, 40)`, `honour_retry_after=True`, `max_retry_after=60`.
-- No file in any of the three repos may contain the upstream provider's name, its four-letter abbreviation, "upstream key" or "key pool" (case-insensitive). The leak-guard test assembles the forbidden strings from fragments.
+- No file in any of the three repos may contain the upstream provider's name, its four-letter abbreviation, the two forbidden pool-internals phrases (see the leak-guard test) (case-insensitive). The leak-guard test assembles the forbidden strings from fragments.
 - The API key never appears in exception text or `repr`.
 - Every commit message ends with `Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>`. Nothing is pushed or published.
 - Local commands in the SDK repo: `.venv/bin/pytest -q`, `.venv/bin/ruff check . && .venv/bin/ruff format --check .`, `.venv/bin/mypy`. In the app worktree: `php -d memory_limit=512M vendor/bin/phpunit`, `vendor/bin/phpstan analyse --memory-limit=512M`, `vendor/bin/pint --test`.
@@ -52,7 +52,7 @@
 - [ ] **Step 4: Write `tests/test_leak_guard.py`**
 
 ```python
-FORBIDDEN = ["".join(["IP", "Quality", "Score"]), "".join(["IP", "QS"]), "upstream key", "key pool"]
+FORBIDDEN = ["".join(["IP", "Quality", "Score"]), "".join(["IP", "QS"]), "upstream " + "key", "key " + "pool"]
 SKIP_DIRS = {".git", ".venv", ".superpowers", "dist", "build", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache"}
 
 def test_no_file_names_the_upstream_provider() -> None:
